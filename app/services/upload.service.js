@@ -1,0 +1,88 @@
+import fs from 'fs/promises';
+import path from 'path';
+import axios from 'axios';
+import { parseCSV } from '../utils/parsers/csvParser.js';
+import { parseXLSX } from '../utils/parsers/xlsxParser.js';
+import { parsePDF, extractProfileFromText, extractProfilesFromText } from '../utils/parsers/pdfParser.js';
+
+const detectFileType = (filename) => {
+  const ext = path.extname(filename).toLowerCase();
+  if (ext === '.csv') return 'csv';
+  if (ext === '.xlsx' || ext === '.xls') return 'xlsx';
+  if (ext === '.json') return 'json';
+  if (ext === '.pdf') return 'pdf';
+  return 'unknown';
+};
+
+export const parseUploadedFile = async (filePath, originalName) => {
+  const type = detectFileType(originalName);
+  console.log('Original file:', originalName);
+  console.log('Detected type:', type);
+  console.log('File path:', filePath);
+
+  if (type === 'csv') {
+    return parseCSV(filePath);
+  }
+
+  if (type === 'json') {
+    const raw = await fs.readFile(filePath, 'utf8');
+    try {
+      const data = JSON.parse(raw);
+      if (Array.isArray(data)) return data;
+      if (data.profiles && Array.isArray(data.profiles)) return data.profiles;
+      return [data];
+    } catch (e) {
+      throw new Error('Invalid JSON file');
+    }
+  }
+
+  if (type === 'xlsx') {
+    return parseXLSX(filePath);
+  }
+
+  if (type === 'pdf') {
+    // extract text from PDF and convert to structured profiles using document intelligence
+    const text = await parsePDF(filePath);
+    console.log('Extracted PDF text length:', text?.length || 0);
+    const profiles = extractProfilesFromText(text);
+    console.log('Extracted profiles count:', profiles.length);
+    return profiles;
+  }
+
+  throw new Error(`Unsupported file type: ${type}`);
+};
+
+const chunkArray = (arr, size) => {
+  const res = [];
+  for (let i = 0; i < arr.length; i += size) res.push(arr.slice(i, i + size));
+  return res;
+};
+
+export const processProfilesWithML = async (profiles) => {
+  const results = [];
+
+  for (const profile of profiles) {
+    try {
+      const resp = await axios.post('http://127.0.0.1:5000/predict', profile, { timeout: 60000 });
+      const data = resp?.data || {};
+
+      results.push({
+        input: profile,
+        risk_score: data.risk_score ?? data.risk ?? null,
+        status: data.status ?? (data.risk_score != null || data.risk != null ? 'scored' : 'unknown'),
+        reasons: data.reasons ?? data.explanations ?? null,
+        raw: data
+      });
+    } catch (error) {
+      results.push({
+        input: profile,
+        risk_score: null,
+        status: 'error',
+        reasons: [error?.message || 'request_failed'],
+        raw: null
+      });
+    }
+  }
+
+  return results;
+};

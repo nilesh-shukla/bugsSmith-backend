@@ -1,7 +1,10 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+
 import authRoutes from './app/routes/auth.routes.js';
+import fraudRoutes from './app/routes/fraud.routes.js';
+import uploadRoutes from './app/routes/upload.routes.js';
 import { errorResponse } from './app/utils/apiResponse.js';
 import { AppError } from './app/utils/appError.js';
 import cookieParser from 'cookie-parser';
@@ -20,6 +23,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use('/api/auth', authRoutes);
+app.use('/api/fraud', fraudRoutes);
+app.use('/api/upload', uploadRoutes);
 
 app.use((req, res) => {
   return res.status(404).json({ success: false, message: `Cannot ${req.method} ${req.originalUrl}` });
