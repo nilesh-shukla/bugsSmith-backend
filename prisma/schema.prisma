@@ -8,11 +8,46 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
+  id        String     @id @default(uuid())
   firstName String
   lastName  String
-  email     String   @unique
+  email     String     @unique
   password  String
   role      String
+  createdAt DateTime   @default(now())
+  Analysis  Analysis[]
+}
+
+model ProfileResult {
+  id        String   @id @default(uuid())
+  entryId   String
+  riskScore Int
+  status    String
   createdAt DateTime @default(now())
+  entry     Entry    @relation(fields: [entryId], references: [id])
+}
+
+model Analysis {
+  id            String   @id @default(uuid())
+  userId        String
+  fileName      String?
+  type          String
+  totalProfiles Int
+  createdAt     DateTime @default(now())
+  user          User     @relation(fields: [userId], references: [id])
+  entries       Entry[]
+}
+
+model Entry {
+  id             String          @id @default(uuid())
+  analysisId     String
+  userName       String
+  displayName    String
+  followers      Int?
+  following      Int?
+  posts          Int?
+  bio            String?
+  profilePicture Boolean?
+  ProfileResult  ProfileResult[]
+  Analysis       Analysis        @relation(fields: [analysisId], references: [id])
 }
