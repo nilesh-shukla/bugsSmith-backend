@@ -64,7 +64,7 @@ export const processProfilesWithML = async (profiles) => {
 
   await Promise.all(profiles.map(async (profile) => {
     try {
-      const resp = await axios.post('http://127.0.0.1:5000/predict', profile, { timeout: 60000 });
+      const resp = await axios.post([process.env.ML_SERVICE_URL], profile, { timeout: 60000 });
       const data = resp?.data || {};
 
       // normalize ML response fields (support a few common keys)
