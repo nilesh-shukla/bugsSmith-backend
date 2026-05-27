@@ -53,6 +53,9 @@ const uploadProfiles = async (req, res) => {
       data: results.map((r) => ({
         // `riskScore` in schema is non-null Int, default to 0 when missing
         riskScore: Number.isFinite(+r.risk_score) ? +r.risk_score : 0,
+        confidence: Number.isFinite(+r.confidence) ? +r.confidence : null,
+        featureContributions: r.featureContributions ?? r.raw?.featureContributions ?? null,
+        anomalies: r.anomalies ?? r.raw?.anomalies ?? null,
         status: r.status || 'unknown',
         entryId: r.entryId || r.input?.id || null
       }))

@@ -67,10 +67,18 @@ export const processProfilesWithML = async (profiles) => {
       const resp = await axios.post('http://127.0.0.1:5000/predict', profile, { timeout: 60000 });
       const data = resp?.data || {};
 
+      // normalize ML response fields (support a few common keys)
+      const confidence = data.confidence ?? data.confidence_score ?? data.confidence_pct ?? data.confidencePercentage ?? null;
+      const featureContributions = data.featureContributions ?? data.feature_contributions ?? data.contributions ?? data.explanations ?? null;
+      const anomalies = data.anomalies ?? data.anomaly ?? data.anomaly_list ?? data.reasons ?? null;
+
       results.push({
         input: profile,
         entryId: profile.id || null,
         risk_score: data.risk_score ?? data.risk ?? null,
+        confidence: Number.isFinite(+confidence) ? +confidence : confidence,
+        featureContributions: featureContributions ?? null,
+        anomalies: anomalies ?? null,
         status: data.status ?? (data.risk_score != null || data.risk != null ? 'scored' : 'unknown'),
         reasons: data.reasons ?? data.explanations ?? null,
         raw: data

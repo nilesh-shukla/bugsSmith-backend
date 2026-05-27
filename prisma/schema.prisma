@@ -22,6 +22,9 @@ model ProfileResult {
   id        String   @id @default(uuid())
   entryId   String
   riskScore Int
+  confidence Float?
+  featureContributions Json?
+  anomalies Json?
   status    String
   createdAt DateTime @default(now())
   entry     Entry    @relation(fields: [entryId], references: [id])
@@ -48,6 +51,9 @@ model Entry {
   posts          Int?
   bio            String?
   profilePicture Boolean?
+  platform       String?
+  accountPrivacy String?
+  missingFeatures Json?
   ProfileResult  ProfileResult[]
   Analysis       Analysis        @relation(fields: [analysisId], references: [id])
 }
