@@ -4,7 +4,7 @@ const checkFakeProfile = async (req, res) => {
         const profileData = req.body;
 
         const response = await axios.post(
-            ["http://127.0.0.1:5000/predict", process.env.ML_SERVICE_URL],
+            [process.env.ML_SERVICE_URL],
             profileData
         );
 
