@@ -64,8 +64,38 @@ export const processProfilesWithML = async (profiles) => {
 
   await Promise.all(profiles.map(async (profile) => {
     try {
-      const resp = await axios.post([process.env.ML_SERVICE_URL], profile, { timeout: 60000 });
+      // Optional debug logs: gate with ML_DEBUG=true to avoid noise in production
+      if (process.env.ML_DEBUG === 'true') {
+        console.log('ML URL:', process.env.ML_SERVICE_URL);
+        try {
+          const health = await axios.get(`${process.env.ML_SERVICE_URL}/health`, { timeout: 5000 });
+          console.log('ML Health:', health.data);
+        } catch (hErr) {
+          console.log('ML Health check failed:', hErr?.message || hErr);
+        }
+
+        console.log('Payload sent to ML:');
+        try {
+          console.log(JSON.stringify(profile, null, 2));
+        } catch (sErr) {
+          console.log('Failed to stringify payload:', sErr?.message || sErr);
+        }
+      }
+
+      console.log('Calling ML Service...');
+      const resp = await axios.post(`${process.env.ML_SERVICE_URL}/predict`, profile, { timeout: 60000 });
       const data = resp?.data || {};
+
+      if (process.env.ML_DEBUG === 'true') {
+        console.log('ML Response:');
+        try {
+          console.log(JSON.stringify(data, null, 2));
+        } catch (sErr) {
+          console.log('ML Response (raw):', data);
+        }
+      } else {
+        console.log('ML Response:', data);
+      }
 
       // normalize ML response fields (support a few common keys)
       const confidence = data.confidence ?? data.confidence_score ?? data.confidence_pct ?? data.confidencePercentage ?? null;
