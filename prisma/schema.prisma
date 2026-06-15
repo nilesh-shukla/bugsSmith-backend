@@ -22,6 +22,8 @@ model ProfileResult {
   id        String   @id @default(uuid())
   entryId   String
   riskScore Int
+  inputQualityScore Int?
+  modelConfidence String?
   confidence Float?
   featureContributions Json?
   anomalies Json?
@@ -36,6 +38,8 @@ model Analysis {
   fileName      String?
   type          String
   totalProfiles Int
+  overallConfidence Int?
+  overallDataIntegrity Int?
   createdAt     DateTime @default(now())
   user          User     @relation(fields: [userId], references: [id])
   entries       Entry[]

@@ -101,12 +101,16 @@ export const processProfilesWithML = async (profiles) => {
       const confidence = data.confidence ?? data.confidence_score ?? data.confidence_pct ?? data.confidencePercentage ?? null;
       const featureContributions = data.featureContributions ?? data.feature_contributions ?? data.contributions ?? data.explanations ?? null;
       const anomalies = data.anomalies ?? data.anomaly ?? data.anomaly_list ?? data.reasons ?? null;
+      const inputQualityScore = data.input_quality_score ?? data.inputQualityScore ?? data.input_quality ?? data.inputQuality ?? null;
+      const modelConfidence = data.model_confidence ?? data.modelConfidence ?? data.model_confidence_level ?? data.modelConfidenceLevel ?? null;
 
       results.push({
         input: profile,
         entryId: profile.id || null,
         risk_score: data.risk_score ?? data.risk ?? null,
         confidence: Number.isFinite(+confidence) ? +confidence : confidence,
+        input_quality_score: Number.isFinite(+inputQualityScore) ? +inputQualityScore : inputQualityScore,
+        model_confidence: modelConfidence ?? null,
         featureContributions: featureContributions ?? null,
         anomalies: anomalies ?? null,
         status: data.status ?? (data.risk_score != null || data.risk != null ? 'scored' : 'unknown'),
@@ -115,6 +119,10 @@ export const processProfilesWithML = async (profiles) => {
       });
     } 
     catch (error) {
+      console.error('ML request error for entry', profile?.id || profile?.userName || '', error?.message || error);
+      if (error?.response) {
+        console.error('ML response status:', error.response.status, 'data:', error.response.data);
+      }
       results.push({
         input: profile,
         risk_score: null,

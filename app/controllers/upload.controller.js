@@ -54,6 +54,8 @@ const uploadProfiles = async (req, res) => {
         // `riskScore` in schema is non-null Int, default to 0 when missing
         riskScore: Number.isFinite(+r.risk_score) ? +r.risk_score : 0,
         confidence: Number.isFinite(+r.confidence) ? +r.confidence : null,
+        inputQualityScore: Number.isFinite(+r.input_quality_score) ? +r.input_quality_score : null,
+        modelConfidence: r.model_confidence ?? r.raw?.model_confidence ?? r.raw?.modelConfidence ?? null,
         featureContributions: r.featureContributions ?? r.raw?.featureContributions ?? null,
         anomalies: r.anomalies ?? r.raw?.anomalies ?? null,
         status: r.status || 'unknown',
@@ -61,7 +63,29 @@ const uploadProfiles = async (req, res) => {
       }))
     });
 
-    return res.status(200).json({ success: true, count: results.length, results });
+    // compute dataset-level aggregates (rounded integers)
+    const overallConfidence = results.length > 0
+      ? Math.round(results.reduce((s, r) => s + (Number.isFinite(+r.confidence) ? +r.confidence : 0), 0) / results.length)
+      : null;
+
+    const overallDataIntegrity = results.length > 0
+      ? Math.round(results.reduce((s, r) => s + (Number.isFinite(+r.input_quality_score) ? +r.input_quality_score : 0), 0) / results.length)
+      : null;
+
+    // persist aggregates to the Analysis row
+    try {
+      await prisma.analysis.update({
+        where: { id: analysis.id },
+        data: {
+          overallConfidence,
+          overallDataIntegrity
+        }
+      });
+    } catch (updateErr) {
+      console.error('Failed to update analysis aggregates:', updateErr);
+    }
+
+    return res.status(200).json({ success: true, analysisId: analysis.id, count: results.length, results, overallConfidence, overallDataIntegrity });
   } catch (error) {
     console.error('Upload Error:', error);
     return res.status(500).json({ success: false, message: 'Failed to process upload' });

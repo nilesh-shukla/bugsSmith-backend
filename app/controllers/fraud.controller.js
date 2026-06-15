@@ -3,6 +3,13 @@ const checkFakeProfile = async (req, res) => {
     try{
         const profileData = req.body;
 
+//         const ML_URL = process.env.ML_SERVICE_URL || "localhost service";
+
+//         const response = await axios.post(
+//             {ML_URL},
+//             profileData
+//          );
+
         const response = await axios.post(
             [process.env.ML_SERVICE_URL],
             profileData
