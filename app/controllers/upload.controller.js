@@ -85,10 +85,22 @@ const uploadProfiles = async (req, res) => {
       console.error('Failed to update analysis aggregates:', updateErr);
     }
 
-    return res.status(200).json({ success: true, analysisId: analysis.id, count: results.length, results, overallConfidence, overallDataIntegrity });
+    return res.status(200).json({ 
+      success: true, 
+      analysisId: analysis.id, 
+      extractedProfiles: profiles,
+      count: results.length, 
+      results, 
+      overallConfidence, 
+      overallDataIntegrity 
+    });
+    
   } catch (error) {
     console.error('Upload Error:', error);
-    return res.status(500).json({ success: false, message: 'Failed to process upload' });
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Failed to process upload' 
+    });
   }
 };
 
