@@ -3,17 +3,17 @@ const checkFakeProfile = async (req, res) => {
     try{
         const profileData = req.body;
 
-        const ML_URL = process.env.ML_SERVICE_URL || "http://127.0.0.1:5000/predict";
-
-        const response = await axios.post(
-            {ML_URL},
-            profileData
-         );
+        // const ML_URL = process.env.ML_SERVICE_URL || "http://127.0.0.1:5000/predict";
 
         // const response = await axios.post(
-        //     [process.env.ML_SERVICE_URL],
+        //     {ML_URL},
         //     profileData
-        // );
+        //  );
+
+        const response = await axios.post(
+            [process.env.ML_SERVICE_URL],
+            profileData
+        );
 
         return res.status(200).json({
             success: true,
